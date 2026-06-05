@@ -285,6 +285,54 @@ await step('EPUB upload → opens, and font/size/theme options actually apply', 
   if (after.color === before.color) throw new Error(`theme color did not change in EPUB (${after.color})`);
   if (!/fraunces/i.test(after.family)) throw new Error(`font family not applied: ${after.family}`);
 
+});
+
+await step('dictionary & wikipedia lookup modal displays definitions', async () => {
+  // Mock the Dictionary API and Wikipedia API using page.route in playwright
+  await page.route('https://api.dictionaryapi.dev/api/v2/entries/en/*', route => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([{
+        word: 'test',
+        phonetic: '/test/',
+        meanings: [{
+          partOfSpeech: 'noun',
+          definitions: [{
+            definition: 'A procedure intended to establish the quality, performance, or reliability of something.',
+            example: 'a spark-plug test'
+          }]
+        }]
+      }])
+    });
+  });
+
+  // Open the sample book
+  await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('.book-card')];
+    const sample = cards.find((c) => c.querySelector('.book-card-title')?.textContent?.includes('Welcome'));
+    sample.click();
+  });
+  await page.waitForSelector('#reader-view.active', { timeout: 5000 });
+
+  // Trigger lookup word programmatically or simulate selection lookup
+  await page.evaluate(() => {
+    window.app.selectedText = "test";
+    window.app.openLookupModal();
+  });
+
+  // Wait for the modal and verify definition is rendered
+  await page.waitForSelector('#lookup-modal.active', { timeout: 5000 });
+  const text = await page.textContent('#lookup-results');
+  if (!text.includes('procedure intended to establish')) {
+    throw new Error(`Definition text not found in results: ${text}`);
+  }
+
+  // Close the lookup modal
+  await page.click('#close-lookup-modal-btn');
+  await page.waitForSelector('#lookup-modal', { state: 'hidden' });
+
+  // Return back to shelf
   await page.click('#close-reader-btn');
   await page.waitForSelector('#dashboard-view.active', { timeout: 5000 });
 });

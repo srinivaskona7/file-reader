@@ -1955,3 +1955,79 @@ body.landing-active .bg-glow-2 {
     .noc-copy .noc-telemetry,
     .noc-copy .noc-tickets { opacity: 1; transform: none; }
 }
+
+/* Dictionary & Wikipedia Lookup Popup styles */
+.lookup-results-content {
+    max-height: 280px;
+    overflow-y: auto;
+    text-align: left;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    padding-right: 8px;
+}
+
+.dict-entry, .wiki-entry {
+    color: var(--reader-text);
+}
+
+.dict-word {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--reader-text);
+}
+
+.dict-phonetic {
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0.6;
+    margin-left: 8px;
+}
+
+.dict-meaning {
+    margin-top: 12px;
+}
+
+.dict-pos {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: var(--reader-code-bg);
+    color: var(--reader-accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.dict-defs {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.dict-defs li {
+    margin-bottom: 8px;
+}
+
+.dict-definition {
+    color: var(--reader-text);
+}
+
+.dict-example {
+    font-style: italic;
+    font-size: 13px;
+    opacity: 0.75;
+    margin-top: 2px;
+}
+
+.wiki-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--reader-text);
+}
+
+.wiki-extract {
+    color: var(--reader-text);
+}

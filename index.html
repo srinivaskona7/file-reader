@@ -376,6 +376,7 @@
             <button class="hl-dot blue" data-color="blue" title="Blue Highlight" aria-label="Highlight in blue"></button>
             <button class="hl-dot pink" data-color="pink" title="Pink Highlight" aria-label="Highlight in pink"></button>
             <div class="tooltip-divider"></div>
+            <button id="tooltip-lookup-btn" class="tooltip-btn" title="Look Up Word"><i class="fa-solid fa-book"></i> Define</button>
             <button id="tooltip-note-btn" class="tooltip-btn" title="Add Note"><i class="fa-solid fa-comment-medical"></i> Note</button>
             <button id="tooltip-copy-btn" class="tooltip-btn" title="Copy Text"><i class="fa-solid fa-copy"></i> Copy</button>
         </div>
@@ -389,6 +390,19 @@
                 <div class="modal-actions">
                     <button id="close-note-modal-btn" class="btn btn-secondary">Cancel</button>
                     <button id="save-note-btn" class="btn btn-primary">Save Note</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lookup Modal Dialog -->
+        <div id="lookup-modal" class="modal">
+            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="lookup-modal-title">
+                <h3 id="lookup-modal-title">Definition & Wikipedia</h3>
+                <div id="lookup-results" class="lookup-results-content">
+                    <p style="text-align:center; padding: 20px 0;"><i class="fa-solid fa-spinner fa-spin"></i> Looking up...</p>
+                </div>
+                <div class="modal-actions">
+                    <button id="close-lookup-modal-btn" class="btn btn-secondary">Close</button>
                 </div>
             </div>
         </div>

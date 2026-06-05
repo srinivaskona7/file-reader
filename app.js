@@ -745,6 +745,8 @@ class EBookReader {
         this.saveNoteBtn = document.getElementById("save-note-btn");
         this.noteTextarea = document.getElementById("note-textarea");
         this.noteQuote = document.getElementById("note-quote");
+        this.lookupModal = document.getElementById("lookup-modal");
+        this.closeLookupModalBtn = document.getElementById("close-lookup-modal-btn");
         
         this.selectedText = "";
         this.selectedRange = null;
@@ -850,6 +852,13 @@ class EBookReader {
             });
         });
 
+        const lookupBtn = document.getElementById("tooltip-lookup-btn");
+        const openLookup = (e) => { e.preventDefault(); this.openLookupModal(); };
+        lookupBtn.addEventListener("mousedown", openLookup);
+        lookupBtn.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") openLookup(e);
+        });
+
         const noteBtn = document.getElementById("tooltip-note-btn");
         const openNote = (e) => { e.preventDefault(); this.openNoteModal(); };
         noteBtn.addEventListener("mousedown", openNote);
@@ -871,6 +880,12 @@ class EBookReader {
         
         this.closeNoteModalBtn.addEventListener("click", () => {
             this.noteModal.classList.remove("active");
+            this.clearSelection();
+            this._restoreFocus();
+        });
+
+        this.closeLookupModalBtn.addEventListener("click", () => {
+            this.lookupModal.classList.remove("active");
             this.clearSelection();
             this._restoreFocus();
         });
@@ -912,6 +927,10 @@ class EBookReader {
                 // Close the most-blocking overlay first.
                 if (this.noteModal.classList.contains("active")) {
                     this.noteModal.classList.remove("active");
+                    this.clearSelection();
+                    this._restoreFocus();
+                } else if (this.lookupModal.classList.contains("active")) {
+                    this.lookupModal.classList.remove("active");
                     this.clearSelection();
                     this._restoreFocus();
                 } else if (this.selectionTooltip.classList.contains("active")) {
@@ -2839,6 +2858,98 @@ function applyHighlight(range, color) {
 
         window.speechSynthesis.cancel();
         speakNext();
+    }
+
+    /* ==========================================================================
+       16. DICTIONARY & WIKIPEDIA LOOKUP SYSTEM
+       ========================================================================== */
+    openLookupModal() {
+        this.selectionTooltip.classList.remove("active");
+        this._lastTrigger = document.activeElement;
+        this.lookupModal.classList.add("active");
+        this.lookupWord(this.selectedText);
+    }
+
+    async lookupWord(word) {
+        const resultsDiv = document.getElementById("lookup-results");
+        resultsDiv.innerHTML = `<p style="text-align:center; padding: 20px 0;"><i class="fa-solid fa-spinner fa-spin"></i> Looking up "${escapeHtml(word)}"...</p>`;
+        
+        const cleanWord = word.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, "").toLowerCase();
+        if (!cleanWord) {
+            resultsDiv.innerHTML = `<p style="text-align:center; opacity:0.7; padding: 20px 0;">Please select a single word to lookup.</p>`;
+            return;
+        }
+
+        const words = cleanWord.split(/\s+/);
+        if (words.length > 5) {
+            resultsDiv.innerHTML = `<p style="text-align:center; opacity:0.7; padding: 20px 0;">Please select a shorter text (up to 5 words) to lookup definitions.</p>`;
+            return;
+        }
+
+        try {
+            // 1. Try Dictionary API
+            const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
+            if (dictRes.ok) {
+                const data = await dictRes.json();
+                if (data && data[0]) {
+                    this.renderDictionaryResult(data[0]);
+                    return;
+                }
+            }
+            
+            // 2. Fallback to Wikipedia API
+            const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanWord)}`);
+            if (wikiRes.ok) {
+                const data = await wikiRes.json();
+                if (data && data.title && data.extract) {
+                    this.renderWikipediaResult(data);
+                    return;
+                }
+            }
+            
+            resultsDiv.innerHTML = `<p style="text-align:center; opacity:0.7; padding: 20px 0;">No definition found for "${escapeHtml(cleanWord)}".</p>`;
+        } catch (e) {
+            resultsDiv.innerHTML = `<p style="text-align:center; color:#ef4444; padding: 20px 0;">Error looking up word: ${escapeHtml(e.message)}</p>`;
+        }
+    }
+
+    renderDictionaryResult(entry) {
+        const resultsDiv = document.getElementById("lookup-results");
+        let html = `<div class="dict-entry">`;
+        html += `<h4 class="dict-word">${escapeHtml(entry.word)} <span class="dict-phonetic">${escapeHtml(entry.phonetic || '')}</span></h4>`;
+        
+        entry.meanings.forEach(meaning => {
+            html += `<div class="dict-meaning">`;
+            html += `<span class="dict-pos">${escapeHtml(meaning.partOfSpeech)}</span>`;
+            html += `<ol class="dict-defs">`;
+            meaning.definitions.slice(0, 3).forEach(def => {
+                html += `<li>`;
+                html += `<div class="dict-definition">${escapeHtml(def.definition)}</div>`;
+                if (def.example) {
+                    html += `<div class="dict-example">"${escapeHtml(def.example)}"</div>`;
+                }
+                html += `</li>`;
+            });
+            html += `</ol></div>`;
+        });
+        
+        html += `</div>`;
+        resultsDiv.innerHTML = html;
+    }
+
+    renderWikipediaResult(data) {
+        const resultsDiv = document.getElementById("lookup-results");
+        resultsDiv.innerHTML = `
+            <div class="wiki-entry">
+                <h4 class="wiki-title">${escapeHtml(data.title)}</h4>
+                <p class="wiki-extract">${escapeHtml(data.extract)}</p>
+                <div style="margin-top: 15px; font-size:12px; opacity:0.8;">
+                    <a href="${escapeHtml(data.content_urls?.desktop?.page || '#')}" target="_blank" style="color:var(--reader-accent);">
+                        Read more on Wikipedia <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i>
+                    </a>
+                </div>
+            </div>
+        `;
     }
 }
 
